@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Track Order – {{ settings.get('site_name','Chakki Premium') }}{% endblock %}
+{% block content %}
+<div class="container" style="padding:4rem 0 6rem;max-width:680px">
+  <h1 class="page-title">Track Your Order</h1>
+  <p style="color:var(--gray);margin-bottom:2rem">Enter your order number or phone number to check status.</p>
+
+  <form method="POST" class="track-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="track-input-row">
+      <input type="text" name="query" placeholder="Order number (e.g. CP240501ABC) or phone number"
+        value="{{ request.form.get('query','') }}" required class="track-input">
+      <button type="submit" class="btn-primary">Track →</button>
+    </div>
+  </form>
+
+  {% if error %}
+  <div class="track-error">{{ error }}</div>
+  {% endif %}
+
+  {% if order %}
+  <div class="track-result">
+    <div class="tr-header">
+      <div>
+        <div class="tr-order-num">{{ order.order_number }}</div>
+        <div class="tr-customer">{{ order.customer_name }} · {{ order.customer_phone }}</div>
+      </div>
+      <span class="status-pill lg-pill" style="background:{{ order.status_color }}">
+        {{ order.status | title }}
+      </span>
+    </div>
+
+    <!-- Progress Bar -->
+    {% set statuses = ['pending','confirmed','processing','shipped','delivered'] %}
+    {% set current_idx = statuses.index(order.status) if order.status in statuses else 0 %}
+    <div class="track-progress">
+      {% for s in statuses %}
+      <div class="tp-step {% if loop.index0 <= current_idx %}done{% endif %} {% if loop.index0 == current_idx %}current{% endif %}">
+        <div class="tp-dot"></div>
+        <div class="tp-label">{{ s | title }}</div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="tr-items">
+      <h4>Items</h4>
+      {% for item in order.items %}
+      <div class="oi-row">
+        <span>{{ item.product_name }} – {{ item.variant_label }} × {{ item.quantity }}</span>
+        <span>₹{{ item.subtotal | int }}</span>
+      </div>
+      {% endfor %}
+      <div class="oi-row bold-row"><span>Total</span><span>₹{{ order.total_amount | int }}</span></div>
+    </div>
+
+    <div class="tr-meta">
+      <div>📍 {{ order.delivery_address }}</div>
+      <div>🕐 Ordered {{ order.created_at.strftime('%d %b %Y, %I:%M %p') }}</div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

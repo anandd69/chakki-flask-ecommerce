@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Products – {{ settings.get('site_name','Chakki Premium') }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <h1>Our Products</h1>
+    <p>Freshly milled, stone-ground chakki atta for every family.</p>
+  </div>
+</div>
+
+<section class="products-section bg-cream">
+  <div class="container">
+    <!-- Category Filter -->
+    <div class="cat-filter">
+      <a href="{{ url_for('shop.products') }}" class="cat-pill {% if not active_cat %}active{% endif %}">All</a>
+      {% for cat in categories %}
+      <a href="{{ url_for('shop.products', category=cat.slug) }}" class="cat-pill {% if active_cat and active_cat.id == cat.id %}active{% endif %}">{{ cat.name }}</a>
+      {% endfor %}
+    </div>
+
+    <div class="products-grid">
+      {% for product in products %}
+      <div class="product-card scroll-reveal">
+        <a href="{{ url_for('shop.product_detail', slug=product.slug) }}">
+          <div class="product-img">
+            {{ product.emoji }}
+            {% if product.badge %}
+            <span class="product-badge" style="background:{{ product.badge_color }}">{{ product.badge }}</span>
+            {% endif %}
+          </div>
+        </a>
+        <div class="product-body">
+          <div class="product-name">{{ product.name }}</div>
+          <div class="product-desc">{{ product.short_desc }}</div>
+          <!-- Variant Selector -->
+          <div class="variant-selector">
+            {% for v in product.variants %}
+            <button class="variant-btn {% if v.is_default %}active{% endif %}"
+              data-variant="{{ v.id }}" data-price="{{ v.price }}"
+              data-product-id="{{ product.id }}"
+              onclick="selectVariant(this, {{ product.id }})">{{ v.size_label }}</button>
+            {% endfor %}
+          </div>
+          {% set dv = product.default_variant %}
+          {% if dv %}
+          <div class="product-footer">
+            <div class="product-price" id="price-{{ product.id }}">
+              ₹{{ dv.price | int }}
+              <span>/ {{ dv.size_label }}</span>
+            </div>
+            <button class="add-btn" id="addbtn-{{ product.id }}"
+              onclick="addToCartFromCard({{ product.id }})">
+              + Cart
+            </button>
+          </div>
+          {% endif %}
+          <a href="{{ url_for('shop.product_detail', slug=product.slug) }}" class="view-link">View Details →</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% if not products %}
+    <div class="empty-state">
+      <div style="font-size:3rem">🌾</div>
+      <h3>No products found</h3>
+      <a href="{{ url_for('shop.products') }}">View all products</a>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+// Track selected variant per product
+const selectedVariants = {};
+
+function selectVariant(btn, productId) {
+  const btns = document.querySelectorAll(`[data-product-id="${productId}"]`);
+  btns.forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedVariants[productId] = {
+    id: btn.dataset.variant,
+    price: parseFloat(btn.dataset.price)
+  };
+  document.getElementById('price-' + productId).innerHTML =
+    '₹' + parseInt(btn.dataset.price) + ' <span>/ ' + btn.textContent + '</span>';
+}
+
+function addToCartFromCard(productId) {
+  const variant = selectedVariants[productId];
+  if (!variant) {
+    // Use first active button
+    const btn = document.querySelector(`[data-product-id="${productId}"].active`);
+    if (btn) addToCart(btn.dataset.variant, 1);
+    return;
+  }
+  addToCart(variant.id, 1);
+}
+</script>
+{% endblock %}

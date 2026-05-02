@@ -1,0 +1,76 @@
+{% extends "admin/base.html" %}
+{% block title %}Categories{% endblock %}
+{% block page_title %}Categories{% endblock %}
+{% block admin_content %}
+<div class="page-actions">
+  <div class="page-heading">Categories</div>
+  <button class="btn btn-gold" onclick="openModal('catModal')">+ Add Category</button>
+</div>
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Name</th><th>Slug</th><th>Description</th><th>Order</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for c in categories %}
+        <tr>
+          <td><strong>{{ c.name }}</strong></td>
+          <td><code style="font-size:0.8rem;color:var(--gold-l)">{{ c.slug }}</code></td>
+          <td style="font-size:0.85rem">{{ c.description or '—' }}</td>
+          <td>{{ c.sort_order }}</td>
+          <td><span class="badge {% if c.is_active %}badge-green{% else %}badge-red{% endif %}">{{ 'Active' if c.is_active else 'Hidden' }}</span></td>
+          <td><button class="btn btn-blue btn-sm" onclick='editCat({{ c | tojson }})'>Edit</button></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="empty-row">No categories yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="catModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="catTitle">Add Category</div>
+      <button class="modal-close" onclick="closeModal('catModal')">×</button>
+    </div>
+    <form method="POST" action="{{ url_for('admin.category_save') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="id" id="c_id">
+      <div class="form-row">
+        <div class="form-group"><label>Name *</label><input type="text" name="name" id="c_name" required></div>
+        <div class="form-group"><label>Slug *</label><input type="text" name="slug" id="c_slug" required></div>
+      </div>
+      <div class="form-group"><label>Description</label><textarea name="description" id="c_desc" rows="2"></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label>Sort Order</label><input type="number" name="sort_order" id="c_sort" value="0"></div>
+        <div style="display:flex;align-items:center;padding-top:1.5rem">
+          <div class="checkbox-row"><input type="checkbox" name="is_active" id="c_active" checked><label for="c_active">Active</label></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('catModal')">Cancel</button>
+        <button type="submit" class="btn btn-gold">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+function editCat(c) {
+  document.getElementById('catTitle').textContent = 'Edit Category';
+  document.getElementById('c_id').value = c.id;
+  document.getElementById('c_name').value = c.name;
+  document.getElementById('c_slug').value = c.slug;
+  document.getElementById('c_desc').value = c.description || '';
+  document.getElementById('c_sort').value = c.sort_order;
+  document.getElementById('c_active').checked = c.is_active;
+  openModal('catModal');
+}
+document.getElementById('c_name').addEventListener('input', function(){
+  if (!document.getElementById('c_id').value)
+    document.getElementById('c_slug').value = this.value.toLowerCase().replace(/[^a-z0-9\s-]/g,'').replace(/\s+/g,'-');
+});
+</script>
+{% endblock %}

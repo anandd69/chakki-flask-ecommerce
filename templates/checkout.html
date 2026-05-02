@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Checkout – {{ settings.get('site_name','Chakki Premium') }}{% endblock %}
+{% block content %}
+<div class="container" style="padding:3rem 0 5rem">
+  <h1 class="page-title">Checkout</h1>
+  <div class="checkout-layout">
+    <!-- Delivery Form -->
+    <div class="checkout-form">
+      <h3>Delivery Details</h3>
+      <form id="checkoutForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Full Name *</label>
+            <input type="text" name="name" placeholder="Your full name" required>
+            <span class="field-error" id="err-name"></span>
+          </div>
+          <div class="form-group">
+            <label>Phone Number *</label>
+            <input type="tel" name="phone" placeholder="10-digit mobile" maxlength="10" required>
+            <span class="field-error" id="err-phone"></span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Email (optional)</label>
+          <input type="email" name="email" placeholder="For order updates">
+          <span class="field-error" id="err-email"></span>
+        </div>
+        <div class="form-group">
+          <label>Delivery Address *</label>
+          <textarea name="address" placeholder="House/Flat no., Street, Area" required></textarea>
+          <span class="field-error" id="err-address"></span>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>City</label>
+            <input type="text" name="city" placeholder="City">
+          </div>
+          <div class="form-group">
+            <label>PIN Code</label>
+            <input type="text" name="pincode" placeholder="6-digit PIN" maxlength="6">
+            <span class="field-error" id="err-pincode"></span>
+          </div>
+        </div>
+        <div class="payment-method">
+          <h4>Payment Method</h4>
+          <label class="radio-option active">
+            <input type="radio" name="payment" value="COD" checked>
+            💵 Cash on Delivery
+          </label>
+        </div>
+        <button type="submit" class="btn-primary full-w mt-16" id="placeOrderBtn">
+          ✅ Place Order
+        </button>
+      </form>
+    </div>
+
+    <!-- Order Summary -->
+    <div class="cart-summary">
+      <h3>Your Items</h3>
+      {% for item in cart_items %}
+      <div class="summary-item">
+        <span>{{ item.emoji }} {{ item.name }} ({{ item.size }}) × {{ item.qty }}</span>
+        <span>₹{{ (item.qty * item.price) | int }}</span>
+      </div>
+      {% endfor %}
+      <hr class="sum-divider">
+      <div class="summary-row"><span>Subtotal</span><span>₹{{ subtotal | int }}</span></div>
+      <div class="summary-row">
+        <span>Delivery</span>
+        <span>{% if delivery_charge > 0 %}₹{{ delivery_charge | int }}{% else %}<span class="free-tag">FREE</span>{% endif %}</span>
+      </div>
+      <div class="summary-total"><span>Total</span><span>₹{{ grand_total | int }}</span></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+document.getElementById('checkoutForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const btn = document.getElementById('placeOrderBtn');
+  document.querySelectorAll('.field-error').forEach(el => el.textContent = '');
+  btn.textContent = '⏳ Placing order...';
+  btn.disabled = true;
+
+  const fd = new FormData(this);
+  const payload = Object.fromEntries(fd.entries());
+
+  const resp = await fetch('/place-order', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json','X-CSRFToken':getCsrfToken()},
+    body: JSON.stringify(payload)
+  });
+  const data = await resp.json();
+
+  if (data.success) {
+    showToast('Order placed successfully!', 'success');
+    setTimeout(() => window.location.href = data.redirect, 800);
+  } else {
+    if (data.errors) {
+      Object.entries(data.errors).forEach(([k,v]) => {
+        const el = document.getElementById('err-'+k);
+        if (el) el.textContent = v;
+      });
+      showToast('Please fix the errors.', 'error');
+    } else {
+      showToast(data.message || 'Order failed.', 'error');
+    }
+    btn.textContent = '✅ Place Order';
+    btn.disabled = false;
+  }
+});
+</script>
+{% endblock %}

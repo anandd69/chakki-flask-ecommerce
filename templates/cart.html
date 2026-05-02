@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Cart – {{ settings.get('site_name','Chakki Premium') }}{% endblock %}
+{% block content %}
+<div class="container" style="padding:3rem 0 5rem">
+  <h1 class="page-title">Your Cart</h1>
+
+  {% if cart_items %}
+  <div class="cart-layout">
+    <!-- Cart Items -->
+    <div class="cart-items">
+      {% for item in cart_items %}
+      <div class="cart-item" id="ci-{{ item.variant_id }}">
+        <div class="ci-emoji">{{ item.emoji }}</div>
+        <div class="ci-info">
+          <div class="ci-name">{{ item.name }}</div>
+          <div class="ci-size">{{ item.size }}</div>
+        </div>
+        <div class="ci-qty">
+          <button onclick="updateQty({{ item.variant_id }}, {{ item.qty - 1 }})">−</button>
+          <span id="qty-{{ item.variant_id }}">{{ item.qty }}</span>
+          <button onclick="updateQty({{ item.variant_id }}, {{ item.qty + 1 }})">+</button>
+        </div>
+        <div class="ci-price" id="price-{{ item.variant_id }}">₹{{ (item.qty * item.price) | int }}</div>
+        <button class="ci-remove" onclick="updateQty({{ item.variant_id }}, 0)" title="Remove">✕</button>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Order Summary -->
+    <div class="cart-summary">
+      <h3>Order Summary</h3>
+      <div class="summary-row">
+        <span>Subtotal</span>
+        <span id="sumSubtotal">₹{{ subtotal | int }}</span>
+      </div>
+      <div class="summary-row">
+        <span>Delivery</span>
+        <span id="sumDelivery">{% if delivery_charge > 0 %}₹{{ delivery_charge | int }}{% else %}FREE{% endif %}</span>
+      </div>
+      {% if subtotal < free_delivery_above %}
+      <div class="free-del-hint" id="freeDelHint">
+        Add ₹{{ (free_delivery_above - subtotal) | int }} more for free delivery!
+      </div>
+      {% endif %}
+      <div class="summary-total">
+        <span>Total</span>
+        <span id="sumTotal">₹{{ grand_total | int }}</span>
+      </div>
+      <a href="{{ url_for('shop.checkout') }}" class="btn-primary full-w">
+        Proceed to Checkout →
+      </a>
+      <a href="{{ url_for('shop.products') }}" class="continue-link">← Continue Shopping</a>
+    </div>
+  </div>
+
+  {% else %}
+  <div class="empty-state">
+    <div style="font-size:4rem">🛒</div>
+    <h3>Your cart is empty</h3>
+    <p>Add some fresh atta to get started!</p>
+    <a href="{{ url_for('shop.products') }}" class="btn-primary">Shop Now</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+async function updateQty(variantId, qty) {
+  const resp = await fetch('/update-cart', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken()},
+    body: JSON.stringify({variant_id: variantId, qty: qty})
+  });
+  const data = await resp.json();
+  if (data.success) {
+    if (qty <= 0) {
+      document.getElementById('ci-' + variantId)?.remove();
+    } else {
+      const qtyEl = document.getElementById('qty-' + variantId);
+      if (qtyEl) qtyEl.textContent = qty;
+    }
+    document.getElementById('sumSubtotal').textContent = '₹' + Math.round(data.subtotal);
+    document.getElementById('sumDelivery').textContent = data.delivery_charge > 0 ? '₹' + data.delivery_charge : 'FREE';
+    document.getElementById('sumTotal').textContent = '₹' + Math.round(data.grand_total);
+    updateCartBadge(data.cart_count);
+    if (data.cart_count === 0) location.reload();
+  }
+}
+</script>
+{% endblock %}

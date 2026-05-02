@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}{{ settings.get('site_name','Chakki Premium') }}{% endblock %}</title>
+<meta name="description" content="{{ settings.get('meta_description','Pure fresh chakki atta delivered to your door.') }}">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<!-- TOAST CONTAINER -->
+<div id="toast-container"></div>
+
+<!-- NAVBAR -->
+<nav id="main-nav">
+  <div class="nav-inner">
+    <a href="{{ url_for('shop.home') }}" class="logo">
+      {{ settings.get('site_name','Chakki') | replace('Chakki','Chakki <span>') | replace(' Premium',' Premium</span>') | safe }}
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="{{ url_for('shop.home') }}">Home</a></li>
+      <li><a href="{{ url_for('shop.products') }}">Products</a></li>
+      <li><a href="{{ url_for('shop.home') }}#process">Our Process</a></li>
+      <li><a href="{{ url_for('shop.home') }}#reviews">Reviews</a></li>
+      <li><a href="{{ url_for('shop.track_order') }}">Track Order</a></li>
+      <li><a href="{{ url_for('shop.home') }}#order" class="nav-cta">Order Now</a></li>
+    </ul>
+    <div class="nav-right">
+      <a href="{{ url_for('shop.cart') }}" class="cart-btn" id="cartBtn">
+        🛒
+        <span class="cart-badge" id="cartBadge" {% if cart_count == 0 %}style="display:none"{% endif %}>{{ cart_count }}</span>
+      </a>
+      <button class="hamburger" id="hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- FLASH MESSAGES -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-container">
+      {% for cat, msg in messages %}
+        <div class="flash flash-{{ cat }}">{{ msg }} <button onclick="this.parentElement.remove()">×</button></div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+{% block content %}{% endblock %}
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="{{ url_for('shop.home') }}" class="logo">{{ settings.get('site_name','Chakki Premium') }}</a>
+        <p>{{ settings.get('footer_tagline','Pure, freshly milled chakki atta delivered across India.') }}</p>
+        <div class="footer-contact">
+          <div>📞 {{ settings.get('contact_phone','+91 98765 43210') }}</div>
+          <div>✉️ {{ settings.get('contact_email','hello@chakkipremium.com') }}</div>
+        </div>
+      </div>
+      {% for col_name, links in footer_links.items() %}
+      <div class="footer-col">
+        <h4>{{ col_name }}</h4>
+        <ul>
+          {% for lnk in links %}
+          <li><a href="{{ lnk.url }}">{{ lnk.label }}</a></li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="footer-bottom">
+      <span>{{ settings.get('footer_copyright','© 2026 Chakki Premium. All rights reserved.') }}</span>
+      <span>Made with ❤️ for healthy families across India</span>
+    </div>
+  </div>
+</footer>
+
+<!-- STICKY BAR -->
+<div class="sticky-bar" id="stickyBar">
+  <span class="sticky-text">{{ settings.get('sticky_bar_text','🌾 Fresh batch milled today!') | safe }}</span>
+  <a href="{{ url_for('shop.home') }}#order" class="btn-primary btn-sm">Order Now →</a>
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

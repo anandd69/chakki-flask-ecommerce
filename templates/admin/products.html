@@ -1,0 +1,61 @@
+{% extends "admin/base.html" %}
+{% block title %}Products{% endblock %}
+{% block page_title %}Products{% endblock %}
+{% block admin_content %}
+<div class="page-actions">
+  <div class="page-heading">All Products ({{ products | length }})</div>
+  <a href="{{ url_for('admin.product_new') }}" class="btn btn-gold">+ Add Product</a>
+</div>
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>Product</th><th>Category</th><th>Variants / Prices</th>
+        <th>Badge</th><th>Status</th><th>Featured</th><th>Actions</th>
+      </tr></thead>
+      <tbody>
+        {% for p in products %}
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:0.6rem">
+              <span style="font-size:1.5rem">{{ p.emoji }}</span>
+              <div>
+                <div style="font-weight:600">{{ p.name }}</div>
+                <div style="font-size:0.75rem;color:var(--muted)">{{ p.short_desc[:50] }}...</div>
+              </div>
+            </div>
+          </td>
+          <td>{{ p.category.name if p.category else '—' }}</td>
+          <td>
+            {% for v in p.variants %}
+            <div style="font-size:0.78rem">{{ v.size_label }}: <strong>₹{{ v.price | int }}</strong>
+              {% if v.mrp %}<s style="color:var(--muted);font-size:0.7rem">₹{{ v.mrp | int }}</s>{% endif %}
+              <span style="color:var(--muted)">(stock: {{ v.stock_qty }})</span>
+            </div>
+            {% endfor %}
+          </td>
+          <td>
+            {% if p.badge %}
+            <span class="badge" style="background:{{ p.badge_color }}22;color:{{ p.badge_color }}">{{ p.badge }}</span>
+            {% else %}—{% endif %}
+          </td>
+          <td><span class="badge {% if p.is_active %}badge-green{% else %}badge-red{% endif %}">
+            {{ 'Active' if p.is_active else 'Hidden' }}
+          </span></td>
+          <td>{% if p.is_featured %}⭐{% else %}—{% endif %}</td>
+          <td>
+            <div style="display:flex;gap:0.5rem">
+              <a href="{{ url_for('admin.product_edit', pid=p.id) }}" class="btn btn-blue btn-sm">Edit</a>
+              <button class="btn btn-danger btn-sm"
+                onclick="confirmDelete('{{ url_for('admin.product_delete', pid=p.id) }}', '{{ p.name }}')">Del</button>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="empty-row">No products yet. <a href="{{ url_for('admin.product_new') }}">Add one →</a></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

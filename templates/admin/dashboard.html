@@ -1,0 +1,111 @@
+{% extends "admin/base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block extra_head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+{% endblock %}
+{% block admin_content %}
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="sc-label">Total Orders</div>
+    <div class="sc-value">{{ total_orders }}</div>
+    <div class="sc-sub">All time</div>
+  </div>
+  <div class="stat-card">
+    <div class="sc-label">Today's Orders</div>
+    <div class="sc-value">{{ today_orders }}</div>
+    <div class="sc-sub">Last 24 hours</div>
+  </div>
+  <div class="stat-card">
+    <div class="sc-label">Pending Orders</div>
+    <div class="sc-value" style="color:{% if pending_orders > 0 %}#e8b84b{% else %}#6abd87{% endif %}">{{ pending_orders }}</div>
+    <div class="sc-sub">Awaiting action</div>
+  </div>
+  <div class="stat-card">
+    <div class="sc-label">Total Revenue</div>
+    <div class="sc-value">₹{{ "{:,.0f}".format(total_revenue) }}</div>
+    <div class="sc-sub">₹{{ "{:,.0f}".format(week_revenue) }} this week</div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:1.5rem;margin-bottom:1.5rem">
+  <!-- Revenue Chart -->
+  <div class="card">
+    <div class="card-title">Revenue – Last 7 Days</div>
+    <canvas id="revenueChart" height="80"></canvas>
+  </div>
+
+  <!-- Order Status Breakdown -->
+  <div class="card">
+    <div class="card-title">Orders by Status</div>
+    {% set status_colors = {'pending':'#C8922A','confirmed':'#3B82F6','processing':'#8B5CF6','shipped':'#F59E0B','delivered':'#4A7C59','cancelled':'#EF4444'} %}
+    {% for status, count in status_counts.items() %}
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:0.6rem 0;border-bottom:1px solid rgba(200,146,42,0.08)">
+      <span style="font-size:0.88rem">
+        <span class="badge" style="background:{{ status_colors.get(status,'#555') }}22;color:{{ status_colors.get(status,'#888') }}">{{ status | title }}</span>
+      </span>
+      <strong>{{ count }}</strong>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Recent Orders -->
+<div class="card">
+  <div class="page-actions" style="margin:0 0 1rem">
+    <div class="card-title" style="margin:0">Recent Orders</div>
+    <a href="{{ url_for('admin.orders') }}" class="btn btn-ghost btn-sm">View All →</a>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>Order #</th><th>Customer</th><th>Items</th>
+        <th>Total</th><th>Status</th><th>Date</th><th>Action</th>
+      </tr></thead>
+      <tbody>
+        {% for order in recent_orders %}
+        <tr>
+          <td><strong style="color:var(--gold-l)">{{ order.order_number }}</strong></td>
+          <td>{{ order.customer_name }}<br><small style="color:var(--muted)">{{ order.customer_phone }}</small></td>
+          <td>{{ order.items | length }} item(s)</td>
+          <td><strong>₹{{ order.total_amount | int }}</strong></td>
+          <td><span class="badge" style="background:{{ order.status_color }}22;color:{{ order.status_color }}">{{ order.status | title }}</span></td>
+          <td style="font-size:0.8rem;color:var(--muted)">{{ order.created_at.strftime('%d %b, %I:%M %p') }}</td>
+          <td><a href="{{ url_for('admin.order_detail', oid=order.id) }}" class="btn btn-blue btn-sm">View</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="empty-row">No orders yet</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+{% block extra_scripts %}
+<script>
+new Chart(document.getElementById('revenueChart'), {
+  type: 'bar',
+  data: {
+    labels: {{ chart_labels | tojson }},
+    datasets: [{
+      label: 'Revenue (₹)',
+      data: {{ chart_data | tojson }},
+      backgroundColor: 'rgba(200,146,42,0.4)',
+      borderColor: '#C8922A',
+      borderWidth: 1,
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: '#8A7560' }, grid: { color: 'rgba(200,146,42,0.08)' } },
+      y: { ticks: { color: '#8A7560', callback: v => '₹' + v }, grid: { color: 'rgba(200,146,42,0.08)' } }
+    }
+  }
+});
+</script>
+{% endblock %}

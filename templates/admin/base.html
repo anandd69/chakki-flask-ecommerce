@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>{% block title %}Admin{% endblock %} – Chakki Premium</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0F0A04; --surface: #1A1208; --surface2: #251A0C;
+  --gold: #C8922A; --gold-l: #E8B84B; --text: #EDE0CC;
+  --muted: #8A7560; --green: #4A7C59; --red: #C0392B;
+  --blue: #2980B9; --border: rgba(200,146,42,0.18);
+  --radius: 12px; --font: 'DM Sans', sans-serif;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:var(--font); background:var(--bg); color:var(--text); display:flex; min-height:100vh; }
+
+/* Sidebar */
+.sidebar { width:240px; background:var(--surface); border-right:1px solid var(--border);
+  display:flex; flex-direction:column; position:fixed; top:0; left:0; height:100vh; z-index:50; }
+.sb-logo { padding:1.5rem 1.2rem; border-bottom:1px solid var(--border);
+  font-size:1.2rem; font-weight:700; color:var(--gold-l); letter-spacing:0.04em; }
+.sb-logo span { color:#fff; font-style:italic; }
+.sb-nav { flex:1; overflow-y:auto; padding:1rem 0; }
+.sb-section { font-size:0.65rem; font-weight:700; letter-spacing:0.15em; text-transform:uppercase;
+  color:var(--muted); padding:0.8rem 1.2rem 0.4rem; }
+.sb-link { display:flex; align-items:center; gap:0.75rem; padding:0.65rem 1.2rem;
+  color:#c9b89a; text-decoration:none; font-size:0.88rem; font-weight:500;
+  border-left:3px solid transparent; transition:all 0.2s; }
+.sb-link:hover { background:rgba(200,146,42,0.08); color:var(--gold-l); }
+.sb-link.active { background:rgba(200,146,42,0.12); color:var(--gold-l); border-left-color:var(--gold); }
+.sb-link .icon { width:18px; text-align:center; }
+.sb-footer { padding:1rem 1.2rem; border-top:1px solid var(--border); font-size:0.8rem; color:var(--muted); }
+.sb-footer a { color:var(--muted); text-decoration:none; }
+.sb-footer a:hover { color:var(--gold-l); }
+
+/* Main */
+.main { margin-left:240px; flex:1; display:flex; flex-direction:column; min-height:100vh; }
+.topbar { background:var(--surface); border-bottom:1px solid var(--border);
+  padding:0 2rem; height:60px; display:flex; align-items:center; justify-content:space-between; }
+.topbar-title { font-size:1rem; font-weight:600; color:var(--text); }
+.topbar-right { display:flex; align-items:center; gap:1.5rem; }
+.admin-badge { font-size:0.78rem; color:var(--muted); }
+.admin-badge strong { color:var(--gold-l); }
+.view-site { font-size:0.82rem; color:var(--muted); text-decoration:none; }
+.view-site:hover { color:var(--gold-l); }
+.content { padding:2rem; flex:1; }
+
+/* Components */
+.card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; }
+.card-title { font-size:0.85rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); margin-bottom:1.2rem; }
+.btn { padding:0.55rem 1.2rem; border-radius:8px; border:none; cursor:pointer; font-family:var(--font); font-size:0.88rem; font-weight:600; transition:all 0.2s; }
+.btn-gold { background:var(--gold); color:#fff; }
+.btn-gold:hover { background:var(--gold-l); color:#111; }
+.btn-sm { padding:0.35rem 0.8rem; font-size:0.78rem; }
+.btn-danger { background:rgba(192,57,43,0.15); color:#e74c3c; border:1px solid rgba(192,57,43,0.3); }
+.btn-danger:hover { background:#c0392b; color:#fff; }
+.btn-ghost { background:transparent; color:var(--muted); border:1px solid var(--border); }
+.btn-ghost:hover { color:var(--text); border-color:var(--muted); }
+.btn-blue { background:rgba(41,128,185,0.15); color:#5dade2; border:1px solid rgba(41,128,185,0.3); }
+.btn-blue:hover { background:#2980b9; color:#fff; }
+
+/* Table */
+.table-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:0.88rem; }
+th { text-align:left; padding:0.75rem 1rem; background:var(--surface2); color:var(--muted); font-size:0.72rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; border-bottom:1px solid var(--border); }
+td { padding:0.85rem 1rem; border-bottom:1px solid rgba(200,146,42,0.08); vertical-align:middle; }
+tr:hover td { background:rgba(200,146,42,0.04); }
+.badge { display:inline-block; padding:0.25rem 0.65rem; border-radius:20px; font-size:0.72rem; font-weight:700; }
+.badge-green { background:rgba(74,124,89,0.2); color:#6abd87; }
+.badge-yellow { background:rgba(200,146,42,0.2); color:var(--gold-l); }
+.badge-red { background:rgba(192,57,43,0.2); color:#e74c3c; }
+.badge-blue { background:rgba(41,128,185,0.2); color:#5dade2; }
+.badge-purple { background:rgba(155,89,182,0.2); color:#bb8fce; }
+
+/* Forms */
+.form-group { margin-bottom:1.2rem; }
+label { display:block; font-size:0.78rem; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.4rem; }
+input[type=text],input[type=email],input[type=tel],input[type=number],
+input[type=password],select,textarea {
+  width:100%; padding:0.75rem 1rem; background:var(--surface2); border:1px solid var(--border);
+  border-radius:8px; color:var(--text); font-family:var(--font); font-size:0.9rem; outline:none; transition:border-color 0.2s; }
+input:focus,select:focus,textarea:focus { border-color:var(--gold); }
+textarea { resize:vertical; min-height:80px; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+.form-hint { font-size:0.75rem; color:var(--muted); margin-top:0.3rem; }
+.checkbox-row { display:flex; align-items:center; gap:0.5rem; }
+.checkbox-row input[type=checkbox] { width:16px; height:16px; accent-color:var(--gold); }
+.checkbox-row label { margin:0; text-transform:none; font-size:0.88rem; color:var(--text); }
+
+/* Flash */
+.flash-admin { padding:0.8rem 1.2rem; border-radius:8px; margin-bottom:1.5rem; font-size:0.88rem; }
+.flash-admin.success { background:rgba(74,124,89,0.2); border:1px solid rgba(74,124,89,0.4); color:#6abd87; }
+.flash-admin.warning { background:rgba(200,146,42,0.15); border:1px solid rgba(200,146,42,0.3); color:var(--gold-l); }
+.flash-admin.error, .flash-admin.danger { background:rgba(192,57,43,0.15); border:1px solid rgba(192,57,43,0.3); color:#e74c3c; }
+
+/* Modal */
+.modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:200; display:none; align-items:center; justify-content:center; padding:1rem; }
+.modal-backdrop.open { display:flex; }
+.modal { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:2rem; width:100%; max-width:540px; max-height:90vh; overflow-y:auto; }
+.modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; }
+.modal-title { font-size:1.1rem; font-weight:700; }
+.modal-close { background:none; border:none; color:var(--muted); font-size:1.4rem; cursor:pointer; }
+.modal-close:hover { color:var(--text); }
+.modal-footer { margin-top:1.5rem; display:flex; gap:0.8rem; justify-content:flex-end; }
+
+/* Stat cards */
+.stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1.5rem; margin-bottom:2rem; }
+.stat-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; }
+.sc-label { font-size:0.72rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); }
+.sc-value { font-size:2rem; font-weight:700; color:var(--gold-l); margin:0.4rem 0; }
+.sc-sub { font-size:0.78rem; color:var(--muted); }
+
+/* Misc */
+.page-actions { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; }
+.page-heading { font-size:1.3rem; font-weight:700; }
+.empty-row td { text-align:center; color:var(--muted); padding:2rem; }
+.toggle { position:relative; display:inline-block; width:36px; height:20px; }
+.toggle input { opacity:0; width:0; height:0; }
+.toggle-slider { position:absolute; inset:0; background:#333; border-radius:20px; cursor:pointer; transition:0.3s; }
+.toggle-slider:before { content:''; position:absolute; width:14px; height:14px; left:3px; top:3px; background:#fff; border-radius:50%; transition:0.3s; }
+.toggle input:checked + .toggle-slider { background:var(--gold); }
+.toggle input:checked + .toggle-slider:before { transform:translateX(16px); }
+@media(max-width:900px){.sidebar{display:none}.main{margin-left:0}.stats-grid{grid-template-columns:1fr 1fr}}
+</style>
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sb-logo">Chakki <span>Admin</span></div>
+  <nav class="sb-nav">
+    <div class="sb-section">Main</div>
+    <a href="{{ url_for('admin.dashboard') }}" class="sb-link {% if request.endpoint=='admin.dashboard' %}active{% endif %}">
+      <span class="icon">📊</span> Dashboard
+    </a>
+    <a href="{{ url_for('admin.orders') }}" class="sb-link {% if 'order' in request.endpoint %}active{% endif %}">
+      <span class="icon">📦</span> Orders
+    </a>
+    <div class="sb-section">Catalog</div>
+    <a href="{{ url_for('admin.products') }}" class="sb-link {% if 'product' in request.endpoint %}active{% endif %}">
+      <span class="icon">🌾</span> Products
+    </a>
+    <a href="{{ url_for('admin.categories') }}" class="sb-link {% if 'categor' in request.endpoint %}active{% endif %}">
+      <span class="icon">🗂️</span> Categories
+    </a>
+    <div class="sb-section">Content</div>
+    <a href="{{ url_for('admin.content') }}" class="sb-link {% if request.endpoint=='admin.content' %}active{% endif %}">
+      <span class="icon">✏️</span> Homepage
+    </a>
+    <a href="{{ url_for('admin.testimonials') }}" class="sb-link {% if 'testimonial' in request.endpoint %}active{% endif %}">
+      <span class="icon">💬</span> Testimonials
+    </a>
+    <div class="sb-section">Reports</div>
+    <a href="{{ url_for('admin.analytics') }}" class="sb-link {% if 'analytics' in request.endpoint %}active{% endif %}">
+      <span class="icon">📈</span> Analytics
+    </a>
+  </nav>
+  <div class="sb-footer">
+    <a href="{{ url_for('shop.home') }}" target="_blank">← View Store</a><br>
+    <a href="{{ url_for('admin.logout') }}" style="margin-top:0.5rem;display:block">🚪 Logout</a>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">{% block page_title %}Admin Panel{% endblock %}</div>
+    <div class="topbar-right">
+      <a href="{{ url_for('shop.home') }}" target="_blank" class="view-site">🌐 View Store</a>
+      <div class="admin-badge">👤 <strong>{{ current_user.full_name or current_user.username }}</strong></div>
+    </div>
+  </div>
+  <div class="content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}{% for cat,msg in messages %}
+        <div class="flash-admin {{ cat }}">{{ msg }}</div>
+      {% endfor %}{% endif %}
+    {% endwith %}
+    {% block admin_content %}{% endblock %}
+  </div>
+</div>
+
+<script>
+function confirmDelete(url, name) {
+  if (!confirm('Delete "' + name + '"? This cannot be undone.')) return;
+  fetch(url, {method:'POST', headers:{'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.content || ''}})
+    .then(r => r.json()).then(d => { if(d.success) location.reload(); });
+}
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+</script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

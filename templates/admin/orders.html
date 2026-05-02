@@ -1,0 +1,68 @@
+{% extends "admin/base.html" %}
+{% block title %}Orders{% endblock %}
+{% block page_title %}Orders{% endblock %}
+{% block admin_content %}
+<div class="page-actions">
+  <div class="page-heading">Orders</div>
+  <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+    {% for s in ['','pending','confirmed','processing','shipped','delivered','cancelled'] %}
+    <a href="{{ url_for('admin.orders', status=s) }}"
+       class="btn btn-sm {% if status_filter == s %}btn-gold{% else %}btn-ghost{% endif %}">
+      {{ s | title if s else 'All' }}
+    </a>
+    {% endfor %}
+  </div>
+</div>
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>Order #</th><th>Customer</th><th>Items</th>
+        <th>Total</th><th>Payment</th><th>Status</th><th>Date</th><th>Action</th>
+      </tr></thead>
+      <tbody>
+        {% for o in orders %}
+        <tr>
+          <td><strong style="color:var(--gold-l)">{{ o.order_number }}</strong></td>
+          <td><div>{{ o.customer_name }}</div><small style="color:var(--muted)">{{ o.customer_phone }}</small></td>
+          <td>{{ o.items | length }}</td>
+          <td><strong>₹{{ o.total_amount | int }}</strong></td>
+          <td><span class="badge badge-blue">{{ o.payment_method }}</span></td>
+          <td>
+            <select class="status-select" data-id="{{ o.id }}"
+              style="background:{{ o.status_color }}22;color:{{ o.status_color }};border:1px solid {{ o.status_color }}44;border-radius:6px;padding:0.25rem 0.5rem;font-size:0.78rem;font-weight:600;cursor:pointer;outline:none">
+              {% for s in ['pending','confirmed','processing','shipped','delivered','cancelled'] %}
+              <option value="{{ s }}" {% if o.status == s %}selected{% endif %} style="background:#1A1208;color:#EDE0CC">{{ s | title }}</option>
+              {% endfor %}
+            </select>
+          </td>
+          <td style="font-size:0.78rem;color:var(--muted)">{{ o.created_at.strftime('%d %b %Y') }}<br>{{ o.created_at.strftime('%I:%M %p') }}</td>
+          <td><a href="{{ url_for('admin.order_detail', oid=o.id) }}" class="btn btn-blue btn-sm">View</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="empty-row">No orders found</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+document.querySelectorAll('.status-select').forEach(sel => {
+  sel.addEventListener('change', async function() {
+    const resp = await fetch(`/admin/orders/${this.dataset.id}/status`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','X-CSRFToken': '{{ csrf_token() }}'},
+      body: JSON.stringify({status: this.value})
+    });
+    const d = await resp.json();
+    if (d.success) {
+      this.style.background = d.color + '22';
+      this.style.color = d.color;
+      this.style.borderColor = d.color + '44';
+    }
+  });
+});
+</script>
+{% endblock %}

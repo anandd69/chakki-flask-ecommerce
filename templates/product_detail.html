@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }} – {{ settings.get('site_name','Chakki Premium') }}{% endblock %}
+{% block content %}
+<div class="container" style="padding-top:3rem;padding-bottom:4rem">
+  <a href="{{ url_for('shop.products') }}" class="back-link">← Back to Products</a>
+  <div class="product-detail-grid">
+    <div class="pd-visual">
+      <div class="pd-img-wrap">{{ product.emoji }}</div>
+      {% if product.badge %}
+      <span class="product-badge large-badge" style="background:{{ product.badge_color }}">{{ product.badge }}</span>
+      {% endif %}
+    </div>
+    <div class="pd-info">
+      {% if product.category %}
+      <div class="pd-cat">{{ product.category.name }}</div>
+      {% endif %}
+      <h1 class="pd-title">{{ product.name }}</h1>
+      <p class="pd-short">{{ product.short_desc }}</p>
+      <p class="pd-desc">{{ product.description }}</p>
+
+      <!-- Variant Selector -->
+      <div class="pd-variants">
+        <div class="pd-variants-label">Select Size:</div>
+        <div class="pd-variant-btns" id="variantBtns">
+          {% for v in variants %}
+          <button class="variant-btn-lg {% if v.is_default %}active{% endif %}"
+            data-id="{{ v.id }}" data-price="{{ v.price }}"
+            data-mrp="{{ v.mrp or '' }}" data-label="{{ v.size_label }}"
+            onclick="selectPdVariant(this)">
+            {{ v.size_label }}
+            {% if v.discount_pct > 0 %}<small>{{ v.discount_pct }}% off</small>{% endif %}
+          </button>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Price Display -->
+      <div class="pd-price-row">
+        <div class="pd-price" id="pdPrice">
+          ₹{{ variants[0].price | int if variants else 0 }}
+        </div>
+        {% if variants and variants[0].mrp %}
+        <div class="pd-mrp" id="pdMrp">MRP <s>₹{{ variants[0].mrp | int }}</s></div>
+        <div class="pd-discount" id="pdDiscount">
+          {% if variants[0].discount_pct > 0 %}{{ variants[0].discount_pct }}% off{% endif %}
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Quantity + Add to Cart -->
+      <div class="pd-cart-row">
+        <div class="qty-selector">
+          <button onclick="changeQty(-1)">−</button>
+          <input type="number" id="pdQty" value="1" min="1" max="20" readonly>
+          <button onclick="changeQty(1)">+</button>
+        </div>
+        <button class="btn-primary pd-cart-btn" id="pdAddBtn" onclick="pdAddToCart()">
+          🛒 Add to Cart
+        </button>
+      </div>
+      <a href="{{ url_for('shop.checkout') }}" class="btn-outline-dark pd-checkout-btn">Buy Now →</a>
+
+      <div class="pd-meta">
+        {% if settings.get('contact_phone') %}<div>📞 {{ settings.get('contact_phone') }}</div>{% endif %}
+        <div>🚚 Free delivery above ₹{{ settings.get('free_delivery_above','500') }}</div>
+        <div>✅ Freshness guaranteed</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Related Products -->
+  {% if related %}
+  <div class="related-section">
+    <h2>You May Also Like</h2>
+    <div class="products-grid">
+      {% for p in related %}
+      <div class="product-card">
+        <a href="{{ url_for('shop.product_detail', slug=p.slug) }}">
+          <div class="product-img">{{ p.emoji }}
+            {% if p.badge %}<span class="product-badge" style="background:{{ p.badge_color }}">{{ p.badge }}</span>{% endif %}
+          </div>
+        </a>
+        <div class="product-body">
+          <div class="product-name">{{ p.name }}</div>
+          {% set dv = p.default_variant %}
+          {% if dv %}
+          <div class="product-footer">
+            <div class="product-price">₹{{ dv.price | int }} <span>/ {{ dv.size_label }}</span></div>
+            <button class="add-btn" onclick="addToCart({{ dv.id }}, 1)">+ Cart</button>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+let currentVariantId = {{ variants[0].id if variants else 0 }};
+
+function selectPdVariant(btn) {
+  document.querySelectorAll('.variant-btn-lg').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentVariantId = parseInt(btn.dataset.id);
+  document.getElementById('pdPrice').textContent = '₹' + parseInt(btn.dataset.price);
+  if (btn.dataset.mrp) {
+    document.getElementById('pdMrp').innerHTML = 'MRP <s>₹' + parseInt(btn.dataset.mrp) + '</s>';
+  }
+}
+
+function changeQty(delta) {
+  const inp = document.getElementById('pdQty');
+  const val = Math.max(1, Math.min(20, parseInt(inp.value) + delta));
+  inp.value = val;
+}
+
+function pdAddToCart() {
+  const qty = parseInt(document.getElementById('pdQty').value);
+  addToCart(currentVariantId, qty);
+}
+</script>
+{% endblock %}

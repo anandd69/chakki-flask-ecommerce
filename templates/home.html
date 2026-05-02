@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+{% block title %}{{ settings.get('site_name','Chakki Premium') }} – Pure Fresh Atta{% endblock %}
+
+{% block content %}
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="hero-text">
+    <div class="hero-badge">{{ settings.get('hero_badge','🌾 Stone-Ground · Chemical-Free · Home Delivery') }}</div>
+    <h1>
+      {{ settings.get('hero_headline','Pure Chakki Atta') }}<br>
+      <em>{{ settings.get('hero_headline_italic','Straight from the Mill') }}</em>
+    </h1>
+    <p class="hero-sub">{{ settings.get('hero_subtext','Traditional stone-ground wheat flour, freshly milled with zero additives.') }}</p>
+    <div class="hero-btns">
+      <a href="#order" class="btn-primary">Order Fresh Atta →</a>
+      <a href="{{ url_for('shop.products') }}" class="btn-outline">View All Products</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat">
+        <div class="stat-num">{{ settings.get('hero_stat_1_num','50K+') }}</div>
+        <div class="stat-label">{{ settings.get('hero_stat_1_label','Happy Families') }}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">{{ settings.get('hero_stat_2_num','100%') }}</div>
+        <div class="stat-label">{{ settings.get('hero_stat_2_label','Chemical Free') }}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">{{ settings.get('hero_stat_3_num','24hr') }}</div>
+        <div class="stat-label">{{ settings.get('hero_stat_3_label','Fresh Delivery') }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="hero-visual">
+    <div class="hero-img-wrap">🌾</div>
+    <div class="trust-row">
+      {% for badge in settings.get('trust_badges','FSSAI Certified,ISO 22000,No Preservatives').split(',') %}
+      <span class="trust-pill">✓ {{ badge.strip() }}</span>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ── WHY CHAKKI ── -->
+<section class="why-section" id="why">
+  <div class="container">
+    <p class="section-tag">Why Choose Us</p>
+    <h2 class="section-title light">{{ settings.get('why_title','The Chakki Difference') }}</h2>
+    <p class="section-sub light">{{ settings.get('why_subtitle','We bring back the goodness of traditional stone-ground atta.') }}</p>
+    <div class="why-grid">
+      {% for card in why_cards %}
+      <div class="why-card scroll-reveal">
+        <div class="why-icon">{{ card.icon }}</div>
+        <h3>{{ card.title }}</h3>
+        <p>{{ card.description }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ── FEATURED PRODUCTS ── -->
+<section class="products-section" id="products">
+  <div class="container">
+    <p class="section-tag">Our Products</p>
+    <h2 class="section-title">Choose Your Atta</h2>
+    <p class="section-sub">Freshly milled every morning. Select the variety that suits your roti, paratha, or bread.</p>
+    <div class="products-grid">
+      {% for product in products %}
+      <div class="product-card scroll-reveal">
+        <div class="product-img">
+          {{ product.emoji }}
+          {% if product.badge %}
+          <span class="product-badge" style="background:{{ product.badge_color }}">{{ product.badge }}</span>
+          {% endif %}
+        </div>
+        <div class="product-body">
+          <div class="product-name">{{ product.name }}</div>
+          <div class="product-desc">{{ product.short_desc }}</div>
+          {% set dv = product.default_variant %}
+          {% if dv %}
+          <div class="product-footer">
+            <div class="product-price">
+              ₹{{ dv.price | int }}
+              <span>/ {{ dv.size_label }}</span>
+              {% if dv.discount_pct > 0 %}
+              <s class="mrp">₹{{ dv.mrp | int }}</s>
+              {% endif %}
+            </div>
+            <button class="add-btn" onclick="quickAddToCart({{ dv.id }}, '{{ product.name }}')">
+              Add to Cart
+            </button>
+          </div>
+          {% endif %}
+          <a href="{{ url_for('shop.product_detail', slug=product.slug) }}" class="view-link">View Details →</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="text-center mt-40">
+      <a href="{{ url_for('shop.products') }}" class="btn-outline-dark">View All Products</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── PROCESS ── -->
+<section class="process-section" id="process">
+  <div class="container">
+    <p class="section-tag">How It Works</p>
+    <h2 class="section-title light">{{ settings.get('process_title','Farm to Your Kitchen in 4 Steps') }}</h2>
+    <p class="section-sub light">{{ settings.get('process_subtitle','Full transparency — from golden wheat to your table.') }}</p>
+    <div class="process-steps">
+      {% for step in process_steps %}
+      <div class="step scroll-reveal" style="animation-delay:{{ loop.index0 * 0.15 }}s">
+        <div class="step-num">{{ step.step_number }}</div>
+        <h4>{{ step.title }}</h4>
+        <p>{{ step.description }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ── TESTIMONIALS ── -->
+<section class="testimonials-section" id="reviews">
+  <div class="container">
+    <p class="section-tag">Customer Love</p>
+    <h2 class="section-title">What Families Are Saying</h2>
+    <div class="reviews-grid">
+      {% for t in testimonials %}
+      <div class="review-card scroll-reveal">
+        <div class="stars">{% for i in range(t.rating) %}★{% endfor %}{% for i in range(5 - t.rating) %}<span style="opacity:.3">★</span>{% endfor %}</div>
+        <p class="review-text">{{ t.review_text }}</p>
+        <div class="reviewer">
+          <div class="reviewer-avatar">{{ t.avatar_initial or t.reviewer_name[0] }}</div>
+          <div>
+            <div class="reviewer-name">{{ t.reviewer_name }}</div>
+            <div class="reviewer-city">{{ t.reviewer_city }}</div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ── QUICK ORDER FORM ── -->
+<section class="order-section" id="order">
+  <div class="order-info">
+    <p class="section-tag">Place Your Order</p>
+    <h2>Fresh Atta at Your Doorstep</h2>
+    <p>Order today and get freshly milled atta delivered within {{ settings.get('delivery_hours','24–48') }} hours. Free delivery above ₹{{ settings.get('free_delivery_above','500') }}.</p>
+    <div class="order-guarantees">
+      <div class="guarantee-item"><div class="gi-icon">✅</div><span>Freshness guarantee — milled on day of dispatch</span></div>
+      <div class="guarantee-item"><div class="gi-icon">🚚</div><span>Free delivery on orders above ₹{{ settings.get('free_delivery_above','500') }}</span></div>
+      <div class="guarantee-item"><div class="gi-icon">🔄</div><span>Easy returns if not satisfied — no questions asked</span></div>
+      <div class="guarantee-item"><div class="gi-icon">📞</div><span>Call us: {{ settings.get('contact_phone','+91 98765 43210') }}</span></div>
+    </div>
+  </div>
+  <div class="order-form-wrap">
+    <div class="form-title">Quick Order Form</div>
+    <form id="quickOrderForm">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-group">
+        <label>Full Name *</label>
+        <input type="text" name="name" placeholder="Your name" required>
+        <span class="field-error" id="err-name"></span>
+      </div>
+      <div class="form-group">
+        <label>Phone Number *</label>
+        <input type="tel" name="phone" placeholder="10-digit mobile number" maxlength="10" required>
+        <span class="field-error" id="err-phone"></span>
+      </div>
+      <div class="form-group">
+        <label>Email (optional)</label>
+        <input type="email" name="email" placeholder="For order updates">
+        <span class="field-error" id="err-email"></span>
+      </div>
+      <div class="form-group">
+        <label>Select Product *</label>
+        <select name="product_select" id="quickProductSelect" onchange="updateQuickVariant(this)">
+          <option value="">Choose atta variety...</option>
+          {% for product in products %}
+            {% for v in product.variants %}
+            <option value="{{ v.id }}" data-price="{{ v.price }}">
+              {{ product.name }} – {{ v.size_label }} (₹{{ v.price | int }})
+            </option>
+            {% endfor %}
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Delivery Address *</label>
+        <textarea name="address" placeholder="House/Flat no., Street, City, PIN code" required></textarea>
+        <span class="field-error" id="err-address"></span>
+      </div>
+      <div id="quickPriceSummary" class="price-summary" style="display:none">
+        <span>Product: <strong id="qpName">-</strong></span>
+        <span>Price: <strong id="qpPrice">-</strong></span>
+      </div>
+      <button type="submit" class="submit-btn" id="quickSubmitBtn">
+        🛒 Place Order Now
+      </button>
+    </form>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Quick add to cart from homepage
+function quickAddToCart(variantId, name) {
+  addToCart(variantId, 1);
+}
+
+// Quick variant price update
+function updateQuickVariant(sel) {
+  const opt = sel.options[sel.selectedIndex];
+  const summary = document.getElementById('quickPriceSummary');
+  if (opt.value) {
+    summary.style.display = 'flex';
+    document.getElementById('qpName').textContent = opt.text.split('–')[0].trim();
+    document.getElementById('qpPrice').textContent = '₹' + parseFloat(opt.dataset.price).toFixed(0);
+  } else {
+    summary.style.display = 'none';
+  }
+}
+
+// Quick Order Form submission
+document.getElementById('quickOrderForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const btn = document.getElementById('quickSubmitBtn');
+  const variantId = document.getElementById('quickProductSelect').value;
+
+  // Clear errors
+  document.querySelectorAll('.field-error').forEach(el => el.textContent = '');
+
+  if (!variantId) {
+    showToast('Please select a product.', 'error');
+    return;
+  }
+
+  // Add to cart first, then redirect to checkout
+  const addRes = await addToCartSync(variantId, 1);
+  if (!addRes.success) {
+    showToast(addRes.message || 'Error adding product.', 'error');
+    return;
+  }
+
+  // Build form data for quick order
+  const fd = new FormData(this);
+  fd.set('variant_id', variantId);
+
+  btn.textContent = '⏳ Placing order...';
+  btn.disabled = true;
+
+  const resp = await fetch('/place-order', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken()},
+    body: JSON.stringify({
+      name:    fd.get('name'),
+      phone:   fd.get('phone'),
+      email:   fd.get('email'),
+      address: fd.get('address'),
+    })
+  });
+
+  const data = await resp.json();
+  if (data.success) {
+    showToast('Order placed! Redirecting...', 'success');
+    setTimeout(() => window.location.href = data.redirect, 1000);
+  } else {
+    if (data.errors) {
+      Object.entries(data.errors).forEach(([k,v]) => {
+        const el = document.getElementById('err-' + k);
+        if (el) el.textContent = v;
+      });
+      showToast('Please fix the errors below.', 'error');
+    } else {
+      showToast(data.message || 'Order failed.', 'error');
+    }
+    btn.textContent = '🛒 Place Order Now';
+    btn.disabled = false;
+  }
+});
+</script>
+{% endblock %}

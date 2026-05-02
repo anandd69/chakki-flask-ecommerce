@@ -1,0 +1,265 @@
+{% extends "admin/base.html" %}
+{% block title %}Homepage Content{% endblock %}
+{% block page_title %}Homepage Content{% endblock %}
+{% block admin_content %}
+
+<!-- Tab Navigation -->
+<div style="display:flex;gap:0.5rem;margin-bottom:1.5rem;flex-wrap:wrap">
+  {% for tab in [('hero','🦸 Hero'),('why','💡 Why Cards'),('process','⚙️ Process'),('testimonials','💬 Reviews'),('footer','🔗 Footer'),('settings','⚙️ Settings')] %}
+  <a href="#{{ tab[0] }}" class="btn btn-sm {% if loop.first %}btn-gold{% else %}btn-ghost{% endif %}"
+     onclick="showTab('{{ tab[0] }}',this)">{{ tab[1] }}</a>
+  {% endfor %}
+</div>
+
+<!-- HERO TAB -->
+<div class="tab-section" id="tab-hero">
+  <div class="card">
+    <div class="card-title">Hero Section</div>
+    <form method="POST" action="{{ url_for('admin.save_settings') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-group"><label>Badge Text</label><input type="text" name="hero_badge" value="{{ settings.get('hero_badge','') }}"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Main Headline</label><input type="text" name="hero_headline" value="{{ settings.get('hero_headline','') }}"></div>
+        <div class="form-group"><label>Italic Sub-headline</label><input type="text" name="hero_headline_italic" value="{{ settings.get('hero_headline_italic','') }}"></div>
+      </div>
+      <div class="form-group"><label>Sub Text</label><textarea name="hero_subtext">{{ settings.get('hero_subtext','') }}</textarea></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem">
+        {% for i in ['1','2','3'] %}
+        <div>
+          <div class="form-group"><label>Stat {{ i }} Number</label><input type="text" name="hero_stat_{{ i }}_num" value="{{ settings.get('hero_stat_'~i~'_num','') }}"></div>
+          <div class="form-group"><label>Stat {{ i }} Label</label><input type="text" name="hero_stat_{{ i }}_label" value="{{ settings.get('hero_stat_'~i~'_label','') }}"></div>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="form-group"><label>Trust Badges (comma-separated)</label><input type="text" name="trust_badges" value="{{ settings.get('trust_badges','') }}"></div>
+      <button type="submit" class="btn btn-gold">Save Hero</button>
+    </form>
+  </div>
+</div>
+
+<!-- WHY CARDS TAB -->
+<div class="tab-section" id="tab-why" style="display:none">
+  <div class="page-actions">
+    <div class="page-heading">Why Cards</div>
+    <button class="btn btn-gold" onclick="openModal('whyModal');resetWhyForm()">+ Add Card</button>
+  </div>
+  <div class="card">
+    <div class="card-title">Section Title</div>
+    <form method="POST" action="{{ url_for('admin.save_settings') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-row">
+        <div class="form-group"><label>Title</label><input type="text" name="why_title" value="{{ settings.get('why_title','') }}"></div>
+        <div class="form-group"><label>Subtitle</label><input type="text" name="why_subtitle" value="{{ settings.get('why_subtitle','') }}"></div>
+      </div>
+      <button type="submit" class="btn btn-gold btn-sm">Save</button>
+    </form>
+  </div>
+  <div class="card" style="margin-top:1rem">
+    <table>
+      <thead><tr><th>Icon</th><th>Title</th><th>Description</th><th>Order</th><th>Active</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for c in why_cards %}
+        <tr>
+          <td style="font-size:1.5rem">{{ c.icon }}</td>
+          <td><strong>{{ c.title }}</strong></td>
+          <td style="font-size:0.82rem">{{ c.description[:80] }}...</td>
+          <td>{{ c.sort_order }}</td>
+          <td><span class="badge {% if c.is_active %}badge-green{% else %}badge-red{% endif %}">{{ 'Yes' if c.is_active else 'No' }}</span></td>
+          <td>
+            <div style="display:flex;gap:0.4rem">
+              <button class="btn btn-blue btn-sm" onclick='editWhy({{ c | tojson }})'>Edit</button>
+              <button class="btn btn-danger btn-sm" onclick="confirmDelete('{{ url_for('admin.why_card_delete', cid=c.id) }}','{{ c.title }}')">Del</button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- PROCESS TAB -->
+<div class="tab-section" id="tab-process" style="display:none">
+  <div class="page-actions">
+    <div class="page-heading">Process Steps</div>
+    <button class="btn btn-gold" onclick="openModal('stepModal');resetStepForm()">+ Add Step</button>
+  </div>
+  <div class="card" style="margin-bottom:1rem">
+    <div class="card-title">Section Title</div>
+    <form method="POST" action="{{ url_for('admin.save_settings') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-row">
+        <div class="form-group"><label>Title</label><input type="text" name="process_title" value="{{ settings.get('process_title','') }}"></div>
+        <div class="form-group"><label>Subtitle</label><input type="text" name="process_subtitle" value="{{ settings.get('process_subtitle','') }}"></div>
+      </div>
+      <button type="submit" class="btn btn-gold btn-sm">Save</button>
+    </form>
+  </div>
+  <div class="card">
+    <table>
+      <thead><tr><th>#</th><th>Title</th><th>Description</th><th>Active</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for s in process_steps %}
+        <tr>
+          <td><strong>{{ s.step_number }}</strong></td>
+          <td>{{ s.title }}</td>
+          <td style="font-size:0.82rem">{{ s.description[:80] }}</td>
+          <td><span class="badge {% if s.is_active %}badge-green{% else %}badge-red{% endif %}">{{ 'Yes' if s.is_active else 'No' }}</span></td>
+          <td>
+            <div style="display:flex;gap:0.4rem">
+              <button class="btn btn-blue btn-sm" onclick='editStep({{ s | tojson }})'>Edit</button>
+              <button class="btn btn-danger btn-sm" onclick="confirmDelete('{{ url_for('admin.process_step_delete', sid=s.id) }}','Step {{ s.step_number }}')">Del</button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- FOOTER TAB -->
+<div class="tab-section" id="tab-footer" style="display:none">
+  <div class="page-actions">
+    <div class="page-heading">Footer Links</div>
+    <button class="btn btn-gold" onclick="openModal('linkModal');resetLinkForm()">+ Add Link</button>
+  </div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Column</th><th>Label</th><th>URL</th><th>Order</th><th>Active</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for lnk in footer_links %}
+        <tr>
+          <td><span class="badge badge-blue">{{ lnk.column_name }}</span></td>
+          <td>{{ lnk.label }}</td>
+          <td style="font-size:0.8rem;color:var(--muted)">{{ lnk.url }}</td>
+          <td>{{ lnk.sort_order }}</td>
+          <td><span class="badge {% if lnk.is_active %}badge-green{% else %}badge-red{% endif %}">{{ 'Yes' if lnk.is_active else 'No' }}</span></td>
+          <td>
+            <div style="display:flex;gap:0.4rem">
+              <button class="btn btn-blue btn-sm" onclick='editLink({{ lnk | tojson }})'>Edit</button>
+              <button class="btn btn-danger btn-sm" onclick="confirmDelete('{{ url_for('admin.footer_link_delete', lid=lnk.id) }}','{{ lnk.label }}')">Del</button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- SETTINGS TAB -->
+<div class="tab-section" id="tab-settings" style="display:none">
+  <div class="card">
+    <div class="card-title">General Settings</div>
+    <form method="POST" action="{{ url_for('admin.save_settings') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-row">
+        <div class="form-group"><label>Site Name</label><input type="text" name="site_name" value="{{ settings.get('site_name','') }}"></div>
+        <div class="form-group"><label>Contact Phone</label><input type="text" name="contact_phone" value="{{ settings.get('contact_phone','') }}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Contact Email</label><input type="text" name="contact_email" value="{{ settings.get('contact_email','') }}"></div>
+        <div class="form-group"><label>Contact Address</label><input type="text" name="contact_address" value="{{ settings.get('contact_address','') }}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Free Delivery Above (₹)</label><input type="number" name="free_delivery_above" value="{{ settings.get('free_delivery_above','500') }}"></div>
+        <div class="form-group"><label>Delivery Hours</label><input type="text" name="delivery_hours" value="{{ settings.get('delivery_hours','24–48') }}"></div>
+      </div>
+      <div class="form-group"><label>Sticky Bar Text (HTML allowed)</label><input type="text" name="sticky_bar_text" value="{{ settings.get('sticky_bar_text','') }}"></div>
+      <div class="form-group"><label>Footer Tagline</label><input type="text" name="footer_tagline" value="{{ settings.get('footer_tagline','') }}"></div>
+      <div class="form-group"><label>Footer Copyright</label><input type="text" name="footer_copyright" value="{{ settings.get('footer_copyright','') }}"></div>
+      <button type="submit" class="btn btn-gold">Save Settings</button>
+    </form>
+  </div>
+</div>
+
+<!-- Why Card Modal -->
+<div class="modal-backdrop" id="whyModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" id="whyTitle">Add Why Card</div><button class="modal-close" onclick="closeModal('whyModal')">×</button></div>
+    <form method="POST" action="{{ url_for('admin.why_card_save') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="id" id="w_id">
+      <div class="form-row">
+        <div class="form-group"><label>Emoji Icon</label><input type="text" name="icon" id="w_icon" maxlength="4" placeholder="🌾"></div>
+        <div class="form-group"><label>Title *</label><input type="text" name="title" id="w_title" required></div>
+      </div>
+      <div class="form-group"><label>Description</label><textarea name="description" id="w_desc" rows="3"></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label>Sort Order</label><input type="number" name="sort_order" id="w_sort" value="0"></div>
+        <div style="display:flex;align-items:center;padding-top:1.5rem"><div class="checkbox-row"><input type="checkbox" name="is_active" id="w_active" checked><label for="w_active">Active</label></div></div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-ghost" onclick="closeModal('whyModal')">Cancel</button><button type="submit" class="btn btn-gold">Save</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- Process Step Modal -->
+<div class="modal-backdrop" id="stepModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" id="stepTitle">Add Process Step</div><button class="modal-close" onclick="closeModal('stepModal')">×</button></div>
+    <form method="POST" action="{{ url_for('admin.process_step_save') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="id" id="s_id">
+      <div class="form-row">
+        <div class="form-group"><label>Step Number</label><input type="number" name="step_number" id="s_num" min="1" required></div>
+        <div class="form-group"><label>Title *</label><input type="text" name="title" id="s_title" required></div>
+      </div>
+      <div class="form-group"><label>Description</label><textarea name="description" id="s_desc" rows="3"></textarea></div>
+      <div class="form-row">
+        <div></div>
+        <div style="display:flex;align-items:center;padding-top:0.5rem"><div class="checkbox-row"><input type="checkbox" name="is_active" id="s_active" checked><label for="s_active">Active</label></div></div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-ghost" onclick="closeModal('stepModal')">Cancel</button><button type="submit" class="btn btn-gold">Save</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- Footer Link Modal -->
+<div class="modal-backdrop" id="linkModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" id="linkTitle">Add Footer Link</div><button class="modal-close" onclick="closeModal('linkModal')">×</button></div>
+    <form method="POST" action="{{ url_for('admin.footer_link_save') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="id" id="l_id">
+      <div class="form-row">
+        <div class="form-group"><label>Column Name</label><input type="text" name="column_name" id="l_col" placeholder="Products, Company, Support"></div>
+        <div class="form-group"><label>Link Label *</label><input type="text" name="label" id="l_label" required></div>
+      </div>
+      <div class="form-group"><label>URL *</label><input type="text" name="url" id="l_url" required></div>
+      <div class="form-row">
+        <div class="form-group"><label>Sort Order</label><input type="number" name="sort_order" id="l_sort" value="0"></div>
+        <div style="display:flex;align-items:center;padding-top:1.5rem"><div class="checkbox-row"><input type="checkbox" name="is_active" id="l_active" checked><label for="l_active">Active</label></div></div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-ghost" onclick="closeModal('linkModal')">Cancel</button><button type="submit" class="btn btn-gold">Save</button></div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+{% block extra_scripts %}
+<script>
+function showTab(id, btn) {
+  document.querySelectorAll('.tab-section').forEach(t => t.style.display = 'none');
+  document.getElementById('tab-' + id).style.display = 'block';
+  document.querySelectorAll('.btn').forEach(b => { if (b.onclick && b.onclick.toString().includes('showTab')) b.className = b.className.replace('btn-gold','btn-ghost'); });
+  if (btn) { btn.className = btn.className.replace('btn-ghost','btn-gold'); }
+}
+// Why card
+function editWhy(c) { document.getElementById('whyTitle').textContent='Edit Why Card'; document.getElementById('w_id').value=c.id; document.getElementById('w_icon').value=c.icon; document.getElementById('w_title').value=c.title; document.getElementById('w_desc').value=c.description||''; document.getElementById('w_sort').value=c.sort_order; document.getElementById('w_active').checked=c.is_active; openModal('whyModal'); }
+function resetWhyForm() { document.getElementById('whyTitle').textContent='Add Why Card'; ['w_id','w_icon','w_title','w_desc'].forEach(id=>document.getElementById(id).value=''); document.getElementById('w_sort').value=0; document.getElementById('w_active').checked=true; }
+// Step
+function editStep(s) { document.getElementById('stepTitle').textContent='Edit Step'; document.getElementById('s_id').value=s.id; document.getElementById('s_num').value=s.step_number; document.getElementById('s_title').value=s.title; document.getElementById('s_desc').value=s.description||''; document.getElementById('s_active').checked=s.is_active; openModal('stepModal'); }
+function resetStepForm() { document.getElementById('stepTitle').textContent='Add Step'; ['s_id','s_title','s_desc'].forEach(id=>document.getElementById(id).value=''); document.getElementById('s_num').value=1; document.getElementById('s_active').checked=true; }
+// Footer link
+function editLink(l) { document.getElementById('linkTitle').textContent='Edit Footer Link'; document.getElementById('l_id').value=l.id; document.getElementById('l_col').value=l.column_name; document.getElementById('l_label').value=l.label; document.getElementById('l_url').value=l.url; document.getElementById('l_sort').value=l.sort_order; document.getElementById('l_active').checked=l.is_active; openModal('linkModal'); }
+function resetLinkForm() { document.getElementById('linkTitle').textContent='Add Footer Link'; ['l_id','l_col','l_label','l_url'].forEach(id=>document.getElementById(id).value=''); document.getElementById('l_sort').value=0; document.getElementById('l_active').checked=true; }
+// Show correct tab on hash
+const hash = location.hash.replace('#','');
+if (['hero','why','process','footer','settings'].includes(hash)) {
+  const btn = document.querySelector(`[onclick*="showTab('${hash}']`);
+  showTab(hash, btn);
+}
+</script>
+{% endblock %}

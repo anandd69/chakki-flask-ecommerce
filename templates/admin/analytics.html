@@ -1,0 +1,54 @@
+{% extends "admin/base.html" %}
+{% block title %}Analytics{% endblock %}
+{% block page_title %}Analytics{% endblock %}
+{% block extra_head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+{% endblock %}
+{% block admin_content %}
+
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:1.5rem;margin-bottom:1.5rem">
+  <div class="card">
+    <div class="card-title">Monthly Revenue (Last 6 Months)</div>
+    <canvas id="monthChart" height="80"></canvas>
+  </div>
+  <div class="card">
+    <div class="card-title">Orders Per Month</div>
+    <canvas id="ordersChart" height="80"></canvas>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">Top Products by Revenue</div>
+  <table>
+    <thead><tr><th>Product</th><th>Qty Sold</th><th>Revenue</th></tr></thead>
+    <tbody>
+      {% for p in top_products %}
+      <tr>
+        <td><strong>{{ p.product_name }}</strong></td>
+        <td>{{ p.qty }} units</td>
+        <td><strong style="color:var(--gold-l)">₹{{ "{:,.0f}".format(p.rev) }}</strong></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="3" class="empty-row">No sales data yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+const labels = {{ months_data | map(attribute='month') | list | tojson }};
+const revenues = {{ months_data | map(attribute='revenue') | list | tojson }};
+const orders = {{ months_data | map(attribute='orders') | list | tojson }};
+const chartDefaults = {
+  responsive:true,
+  plugins:{legend:{display:false}},
+  scales:{
+    x:{ticks:{color:'#8A7560'},grid:{color:'rgba(200,146,42,0.08)'}},
+    y:{ticks:{color:'#8A7560'},grid:{color:'rgba(200,146,42,0.08)'}}
+  }
+};
+new Chart(document.getElementById('monthChart'),{type:'line',data:{labels,datasets:[{label:'Revenue',data:revenues,borderColor:'#C8922A',backgroundColor:'rgba(200,146,42,0.1)',fill:true,tension:0.4,pointBackgroundColor:'#C8922A'}]},options:{...chartDefaults,scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,ticks:{color:'#8A7560',callback:v=>'₹'+v}}}}});
+new Chart(document.getElementById('ordersChart'),{type:'bar',data:{labels,datasets:[{label:'Orders',data:orders,backgroundColor:'rgba(74,124,89,0.5)',borderColor:'#4A7C59',borderWidth:1,borderRadius:4}]},options:chartDefaults});
+</script>
+{% endblock %}

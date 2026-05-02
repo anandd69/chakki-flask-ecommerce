@@ -1,0 +1,78 @@
+{% extends "admin/base.html" %}
+{% block title %}Order {{ order.order_number }}{% endblock %}
+{% block page_title %}Order Detail{% endblock %}
+{% block admin_content %}
+<a href="{{ url_for('admin.orders') }}" style="color:var(--muted);font-size:0.85rem;text-decoration:none">← Back to Orders</a>
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:1.5rem;margin-top:1.5rem">
+  <div>
+    <div class="card" style="margin-bottom:1.5rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <div>
+          <div style="font-size:1.2rem;font-weight:700;color:var(--gold-l)">{{ order.order_number }}</div>
+          <div style="font-size:0.78rem;color:var(--muted)">{{ order.created_at.strftime('%d %B %Y, %I:%M %p') }}</div>
+        </div>
+        <span class="badge" style="background:{{ order.status_color }}22;color:{{ order.status_color }};font-size:0.9rem;padding:0.4rem 1rem">{{ order.status | title }}</span>
+      </div>
+      <h4 style="margin-bottom:0.8rem;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Items Ordered</h4>
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr>
+          <th style="text-align:left;padding:0.5rem;color:var(--muted);font-size:0.75rem">Product</th>
+          <th style="text-align:right;padding:0.5rem;color:var(--muted);font-size:0.75rem">Qty</th>
+          <th style="text-align:right;padding:0.5rem;color:var(--muted);font-size:0.75rem">Unit Price</th>
+          <th style="text-align:right;padding:0.5rem;color:var(--muted);font-size:0.75rem">Subtotal</th>
+        </tr></thead>
+        <tbody>
+          {% for item in order.items %}
+          <tr style="border-top:1px solid rgba(200,146,42,0.08)">
+            <td style="padding:0.7rem 0.5rem"><strong>{{ item.product_name }}</strong><br><small style="color:var(--muted)">{{ item.variant_label }}</small></td>
+            <td style="text-align:right;padding:0.7rem 0.5rem">{{ item.quantity }}</td>
+            <td style="text-align:right;padding:0.7rem 0.5rem">₹{{ item.unit_price | int }}</td>
+            <td style="text-align:right;padding:0.7rem 0.5rem"><strong>₹{{ item.subtotal | int }}</strong></td>
+          </tr>
+          {% endfor %}
+          <tr style="border-top:1px solid rgba(200,146,42,0.2)">
+            <td colspan="3" style="text-align:right;padding:0.6rem 0.5rem;color:var(--muted)">Delivery</td>
+            <td style="text-align:right;padding:0.6rem 0.5rem">{% if order.delivery_charge > 0 %}₹{{ order.delivery_charge | int }}{% else %}FREE{% endif %}</td>
+          </tr>
+          <tr>
+            <td colspan="3" style="text-align:right;padding:0.6rem 0.5rem;font-weight:700">Grand Total</td>
+            <td style="text-align:right;padding:0.6rem 0.5rem;font-weight:700;color:var(--gold-l);font-size:1.1rem">₹{{ order.total_amount | int }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div>
+    <div class="card" style="margin-bottom:1rem">
+      <div class="card-title">Customer</div>
+      <div style="font-size:0.9rem;line-height:2">
+        <div><strong>{{ order.customer_name }}</strong></div>
+        <div>📞 {{ order.customer_phone }}</div>
+        {% if order.customer_email %}<div>✉️ {{ order.customer_email }}</div>{% endif %}
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:1rem">
+      <div class="card-title">Delivery Address</div>
+      <div style="font-size:0.88rem;line-height:1.7;color:var(--text)">
+        {{ order.delivery_address }}<br>
+        {% if order.city %}{{ order.city }}{% endif %}{% if order.pincode %} – {{ order.pincode }}{% endif %}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Update Status</div>
+      <form method="POST" action="{{ url_for('admin.order_status', oid=order.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-group">
+          <select name="status">
+            {% for s in ['pending','confirmed','processing','shipped','delivered','cancelled'] %}
+            <option value="{{ s }}" {% if order.status == s %}selected{% endif %}>{{ s | title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button type="submit" class="btn btn-gold" style="width:100%">Update Status</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

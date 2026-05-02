@@ -7,18 +7,19 @@ class Config:
     WTF_CSRF_ENABLED = True
     WTF_CSRF_TIME_LIMIT = 3600
 
-    # ── Database ──────────────────────────────────────────
-    DB_HOST     = os.environ.get('DB_HOST', 'localhost')
-    DB_PORT     = int(os.environ.get('DB_PORT', 3306))
-    DB_USER     = os.environ.get('DB_USER', 'root')
-    DB_PASSWORD = os.environ.get('DB_PASSWORD', '')
-    DB_NAME     = os.environ.get('DB_NAME', 'chakki_db')
+    # ── Database (Render PostgreSQL Compatible) ───────────
+    DATABASE_URL = os.environ.get("DATABASE_URL")
 
-    # SQLAlchemy URI
-    SQLALCHEMY_DATABASE_URI = (
-        f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-        "?charset=utf8mb4"
-    )
+    if DATABASE_URL:
+        # Fix for Render postgres URL
+        if DATABASE_URL.startswith("postgres://"):
+            DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+        SQLALCHEMY_DATABASE_URI = DATABASE_URL
+    else:
+        # Local fallback (no MySQL required)
+        SQLALCHEMY_DATABASE_URI = "sqlite:///local.db"
+
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_recycle': 299,
@@ -35,13 +36,16 @@ class Config:
     DELIVERY_CHARGE     = 60
     ORDER_PREFIX        = 'CP'
 
+
 class DevelopmentConfig(Config):
     DEBUG = True
     SQLALCHEMY_ECHO = False
 
+
 class ProductionConfig(Config):
     DEBUG = False
     SESSION_COOKIE_SECURE = True
+
 
 config = {
     'development': DevelopmentConfig,
